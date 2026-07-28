@@ -72,9 +72,9 @@ show_menu() {
     echo ""
     echo "===== Lightsail Accounts ====="
     echo "1) List Accounts"
-    echo "2) Create Account"
-    echo "3) Suspend Account"
-    echo "4) Delete Account"
+    echo "2) Create Account (Coming Soon)"
+    echo "3) Suspend Account (Coming Soon)"
+    echo "4) Delete Account (Coming Soon)"
     echo "5) Exit"
     echo "==============================="
 }
