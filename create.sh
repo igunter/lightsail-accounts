@@ -18,6 +18,7 @@ PHP_SOCK_GLOB="/run/php/php*-fpm.sock"
 TEMPLATE_FILE="$(dirname "$0")/nginx-vhost.template"
 SUSPENDED_ROOT="/var/www/_suspended"
 SUSPENDED_PAGE_TEMPLATE="$(dirname "$0")/suspended-page.template"
+PLACEHOLDER_PAGE_TEMPLATE="$(dirname "$0")/placeholder-page.template"
 
 USERNAME_RE='^[a-z][a-z0-9_-]{2,31}$'
 DOMAIN_RE='^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
@@ -95,6 +96,31 @@ create_system_user() {
     echo "${USERNAME}:${PASSWORD}" | chpasswd
     mkdir -p "${webroot}/public"
     chown -R "${USERNAME}:${USERNAME}" "$webroot"
+
+    # useradd's default home dir mode can be as restrictive as 700, which
+    # blocks nginx/php-fpm (running as a different user) from traversing in.
+    # 711 on the home dir allows traversal without listing; 755 on public/
+    # makes the actual served content readable.
+    chmod 711 "$webroot"
+    chmod -R 755 "${webroot}/public"
+
+    seed_placeholder_page "$webroot"
+}
+
+seed_placeholder_page() {
+    local webroot="$1"
+    local index_path="${webroot}/public/index.html"
+
+    if [ -e "$index_path" ] || [ -e "${webroot}/public/index.php" ]; then
+        return
+    fi
+    if [ ! -f "$PLACEHOLDER_PAGE_TEMPLATE" ]; then
+        return
+    fi
+
+    cp "$PLACEHOLDER_PAGE_TEMPLATE" "$index_path"
+    chown "${USERNAME}:${USERNAME}" "$index_path"
+    chmod 644 "$index_path"
 }
 
 ensure_suspended_page() {
@@ -107,6 +133,8 @@ ensure_suspended_page() {
     fi
     mkdir -p "$SUSPENDED_ROOT"
     cp "$SUSPENDED_PAGE_TEMPLATE" "${SUSPENDED_ROOT}/index.html"
+    chmod 755 "$SUSPENDED_ROOT"
+    chmod 644 "${SUSPENDED_ROOT}/index.html"
 }
 
 detect_php_sock() {

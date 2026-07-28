@@ -18,6 +18,7 @@ server {
     root %%WEBROOT%%;
     index index.php index.html;
 
+    # lightsail-accounts: suspend check (managed - do not remove)
     if (-f "%%HOME%%/.suspended") {
         return 503;
     }

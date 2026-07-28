@@ -19,6 +19,8 @@ ACCOUNT_META_FILE=".account"
 SUSPENDED_FLAG_FILE=".suspended"
 SUSPENDED_ROOT="/var/www/_suspended"
 SUSPENDED_PAGE_TEMPLATE="$(dirname "$0")/suspended-page.template"
+NGINX_CONF_D="/etc/nginx/conf.d"
+SUSPEND_MARKER="# lightsail-accounts: suspend check (managed - do not remove)"
 
 require_root() {
     if [ "$(id -u)" -ne 0 ]; then
@@ -77,6 +79,68 @@ ensure_suspended_page() {
     fi
     mkdir -p "$SUSPENDED_ROOT"
     cp "$SUSPENDED_PAGE_TEMPLATE" "${SUSPENDED_ROOT}/index.html"
+    chmod 755 "$SUSPENDED_ROOT"
+    chmod 644 "${SUSPENDED_ROOT}/index.html"
+}
+
+# Vhosts written by create.sh already contain the suspend check (marked by
+# SUSPEND_MARKER). Vhosts that predate this feature, or were created by hand,
+# don't - this inserts the check into an existing vhost so suspending an
+# older account actually takes effect. It only ever inserts new lines right
+# after the first "server {" and never rewrites existing lines, so any
+# ssl_certificate directives certbot already added are left untouched.
+patch_legacy_vhost() {
+    local home="${BASE_DIR}/${USERNAME}"
+    local vhost_path="${NGINX_CONF_D}/${USERNAME}.conf"
+
+    if [ ! -f "$vhost_path" ]; then
+        echo "No nginx vhost found at ${vhost_path} - suspend will lock the login and update metadata, but can't redirect web traffic."
+        return
+    fi
+    if grep -qF "$SUSPEND_MARKER" "$vhost_path"; then
+        return
+    fi
+
+    echo "Vhost ${vhost_path} predates suspend support - patching it in."
+    local backup_path="${vhost_path}.bak-$(date +%s)"
+    cp "$vhost_path" "$backup_path"
+
+    local snippet
+    snippet=$(cat <<EOF
+    ${SUSPEND_MARKER}
+    if (-f "${home}/${SUSPENDED_FLAG_FILE}") {
+        return 503;
+    }
+    error_page 503 @suspended;
+    location @suspended {
+        root ${SUSPENDED_ROOT};
+        rewrite ^ /index.html break;
+    }
+EOF
+)
+
+    local tmp_path
+    tmp_path="$(mktemp)"
+    if ! awk -v ins="$snippet" '
+        !done && /^[[:space:]]*server[[:space:]]*\{/ { print; print ins; done=1; next }
+        { print } END { exit !done }
+    ' "$vhost_path" > "$tmp_path"; then
+        echo "Could not find a \"server {\" line in ${vhost_path} - leaving it untouched. Add the suspend check manually."
+        rm -f "$tmp_path" "$backup_path"
+        return
+    fi
+
+    mv "$tmp_path" "$vhost_path"
+
+    if command -v nginx &>/dev/null; then
+        if nginx -t &>/dev/null; then
+            systemctl reload nginx 2>/dev/null || service nginx reload 2>/dev/null || true
+            echo "Patched and reloaded nginx (backup saved at ${backup_path})."
+        else
+            echo "nginx config test failed after patching ${vhost_path} - reverting from backup."
+            cp "$backup_path" "$vhost_path"
+        fi
+    fi
 }
 
 lock_system_user() {
@@ -93,6 +157,7 @@ suspend_account() {
     read_account_meta
 
     ensure_suspended_page
+    patch_legacy_vhost
     touch "${BASE_DIR}/${USERNAME}/${SUSPENDED_FLAG_FILE}"
     lock_system_user
     write_account_meta

@@ -44,6 +44,8 @@ This option runs `create.sh`, which will ask you for:
 
 It then creates a Linux system user, a webroot at `/var/www/<username>/public` (PHP-FPM, Laravel-style rewrite to `index.php`), an nginx vhost at `/etc/nginx/conf.d/<username>.conf` for the domain, requests an SSL certificate via `certbot` if SSL was requested, and writes the account's `.account` metadata file. The PHP-FPM socket is auto-detected from `/run/php/php*-fpm.sock`.
 
+The account's home directory is `chmod`'d `711` (traversable, not listable) and `public/` `755`, so nginx/php-fpm can actually read the site even though it runs as a different user. A placeholder "Site Coming Soon" page (`placeholder-page.template`) is seeded into `public/` if it's empty, so a freshly created account doesn't 403 before real content is deployed.
+
 ### Suspend Account
 
 This option runs `suspend.sh`. You'll be asked for the account's username, then it:
@@ -52,6 +54,8 @@ This option runs `suspend.sh`. You'll be asked for the account's username, then 
 - Sets `STATUS="suspended"` in the account's `.account` file.
 
 Every vhost created by `create.sh` checks for that sentinel file on each request (see `nginx-vhost.template`) and, if present, returns `503 Service Unavailable` and serves a shared "Account Suspended" page (`/var/www/_suspended/index.html`, from `suspended-page.template`) instead of the site. No nginx config edit or reload is needed, so suspending never touches the SSL directives `certbot` added to the vhost file.
+
+If the account's vhost predates this feature (e.g. it was set up by hand before this tool existed), `suspend.sh` detects that it's missing the check and patches it in automatically - it only ever inserts new lines right after the vhost's first `server {`, so it never rewrites the `ssl_certificate` lines `certbot` already added. A timestamped backup of the original file is kept alongside it (`<name>.conf.bak-<timestamp>`).
 
 `suspend.sh` can also be run directly: `sudo bash suspend.sh`.
 
