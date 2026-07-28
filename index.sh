@@ -50,7 +50,15 @@ list_accounts() {
 }
 
 create_account() {
-    echo "Create Account: coming soon."
+    local create_script
+    create_script="$(dirname "$0")/create.sh"
+
+    if [ ! -f "$create_script" ]; then
+        echo "create.sh not found next to index.sh."
+        return
+    fi
+
+    bash "$create_script"
 }
 
 suspend_account() {
@@ -72,7 +80,7 @@ show_menu() {
     echo ""
     echo "===== Lightsail Accounts ====="
     echo "1) List Accounts"
-    echo "2) Create Account (Coming Soon)"
+    echo "2) Create Account"
     echo "3) Suspend Account (Coming Soon)"
     echo "4) Delete Account (Coming Soon)"
     echo "5) Exit"

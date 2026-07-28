@@ -1,0 +1,28 @@
+# Lightsail Accounts - nginx vhost template
+#
+# Placeholders (substituted by create.sh):
+#   %%DOMAIN%%      - primary domain (e.g. example.com)
+#   %%WEBROOT%%     - public webroot path (e.g. /var/www/username/public)
+#   %%PHP_SOCK%%    - php-fpm socket path (e.g. /run/php/php8.2-fpm.sock)
+
+server {
+    listen 80;
+    server_name %%DOMAIN%%;
+    root %%WEBROOT%%;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:%%PHP_SOCK%%;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}

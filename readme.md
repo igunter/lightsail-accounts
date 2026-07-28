@@ -25,7 +25,7 @@ cd /lightsail-accounts && sudo git pull && sudo bash index.sh
 
 After running the script, you will then be displayed with a menu of options.
 - List Accounts
-- Create Accounts (Coming Soon)
+- Create Account
 - Suspend Accounts (Coming Soon)
 - Delete Accounts (Coming Soon)
 
@@ -33,13 +33,15 @@ After running the script, you will then be displayed with a menu of options.
 
 This option will list the accounts that you have created.
 
-### Create Accounts
+### Create Account
 
-This option will create an account. You will be asked for the following information:
+This option runs `create.sh`, which will ask you for:
 - Username
 - Password
 - Domain Name
 - SSL Required
+
+It then creates a Linux system user, a webroot at `/var/www/<username>/public` (PHP-FPM, Laravel-style rewrite to `index.php`), an nginx vhost at `/etc/nginx/conf.d/<username>.conf` for the domain, requests an SSL certificate via `certbot` if SSL was requested, and writes the account's `.account` metadata file. The PHP-FPM socket is auto-detected from `/run/php/php*-fpm.sock`.
 
 ### Suspend Accounts
 
