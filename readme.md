@@ -14,6 +14,10 @@ sudo git clone https://github.com/igunter/lightsail-accounts.git /lightsail-acco
 
 else you need to run
 ```
+cd /lightsail-accounts && sudo bash index.sh
+```
+or if you want to update the script
+```
 cd /lightsail-accounts && sudo git pull && sudo bash index.sh
 ```
 
@@ -21,9 +25,9 @@ cd /lightsail-accounts && sudo git pull && sudo bash index.sh
 
 After running the script, you will then be displayed with a menu of options.
 - List Accounts
-- Create Accounts
-- Suspend Accounts
-- Delete Accounts
+- Create Accounts (Coming Soon)
+- Suspend Accounts (Coming Soon)
+- Delete Accounts (Coming Soon)
 
 ### List Accounts
 
