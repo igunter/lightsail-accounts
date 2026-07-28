@@ -1,0 +1,12 @@
+# Lightsail Accounts - account metadata template
+#
+# For each existing account, copy this file to:
+#   /var/www/<username>/.account
+# then fill in the values below for that account.
+#
+# This file is sourced by index.sh, so keep it valid bash (KEY="value").
+
+DOMAIN="example.com"
+SSL="yes"          # yes or no
+STATUS="active"    # active or suspended
+CREATED="2026-07-28"
