@@ -32,7 +32,12 @@ list_accounts() {
     local accounts=()
     for entry in "$BASE_DIR"/*/; do
         [ -d "$entry" ] || continue
-        accounts+=("$(basename "$entry")")
+        local name
+        name="$(basename "$entry")"
+        # Directories starting with "_" (e.g. _deactivated) are shared
+        # internal assets, not accounts - skip them.
+        [[ "$name" == _* ]] && continue
+        accounts+=("$name")
     done
 
     if [ ${#accounts[@]} -eq 0 ]; then
