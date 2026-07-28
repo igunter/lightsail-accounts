@@ -26,8 +26,9 @@ cd /lightsail-accounts && sudo git pull && sudo bash index.sh
 After running the script, you will then be displayed with a menu of options.
 - List Accounts
 - Create Account
-- Suspend Accounts (Coming Soon)
-- Delete Accounts (Coming Soon)
+- Suspend Account
+- Reactivate Account
+- Delete Account (Coming Soon)
 
 ### List Accounts
 
@@ -43,12 +44,24 @@ This option runs `create.sh`, which will ask you for:
 
 It then creates a Linux system user, a webroot at `/var/www/<username>/public` (PHP-FPM, Laravel-style rewrite to `index.php`), an nginx vhost at `/etc/nginx/conf.d/<username>.conf` for the domain, requests an SSL certificate via `certbot` if SSL was requested, and writes the account's `.account` metadata file. The PHP-FPM socket is auto-detected from `/run/php/php*-fpm.sock`.
 
-### Suspend Accounts
+### Suspend Account
 
-This option will suspend an account. You will be asked for the following information:
-- Username
+This option runs `suspend.sh`. You'll be asked for the account's username, then it:
+- Creates a `.suspended` sentinel file in the account's home directory (`/var/www/<username>/.suspended`).
+- Locks the account's Linux login (`usermod -L`).
+- Sets `STATUS="suspended"` in the account's `.account` file.
 
-### Delete Accounts
+Every vhost created by `create.sh` checks for that sentinel file on each request (see `nginx-vhost.template`) and, if present, returns `503 Service Unavailable` and serves a shared "Account Suspended" page (`/var/www/_suspended/index.html`, from `suspended-page.template`) instead of the site. No nginx config edit or reload is needed, so suspending never touches the SSL directives `certbot` added to the vhost file.
+
+`suspend.sh` can also be run directly: `sudo bash suspend.sh`.
+
+### Reactivate Account
+
+This option runs `reactivate.sh` to undo a suspension: removes the `.suspended` sentinel file, unlocks the Linux login (`usermod -U`), and sets `STATUS="active"` again. Site traffic is served normally again immediately, with no nginx reload needed.
+
+`reactivate.sh` can also be run directly: `sudo bash reactivate.sh`.
+
+### Delete Account
 
 This option will delete an account. You will be asked for the following information:
 - Username

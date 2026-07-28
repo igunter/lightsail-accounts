@@ -16,6 +16,8 @@ ACCOUNT_META_FILE=".account"
 NGINX_CONF_D="/etc/nginx/conf.d"
 PHP_SOCK_GLOB="/run/php/php*-fpm.sock"
 TEMPLATE_FILE="$(dirname "$0")/nginx-vhost.template"
+SUSPENDED_ROOT="/var/www/_suspended"
+SUSPENDED_PAGE_TEMPLATE="$(dirname "$0")/suspended-page.template"
 
 USERNAME_RE='^[a-z][a-z0-9_-]{2,31}$'
 DOMAIN_RE='^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
@@ -95,6 +97,18 @@ create_system_user() {
     chown -R "${USERNAME}:${USERNAME}" "$webroot"
 }
 
+ensure_suspended_page() {
+    if [ -f "${SUSPENDED_ROOT}/index.html" ]; then
+        return
+    fi
+    if [ ! -f "$SUSPENDED_PAGE_TEMPLATE" ]; then
+        echo "Suspended-page template not found: ${SUSPENDED_PAGE_TEMPLATE}. Skipping."
+        return
+    fi
+    mkdir -p "$SUSPENDED_ROOT"
+    cp "$SUSPENDED_PAGE_TEMPLATE" "${SUSPENDED_ROOT}/index.html"
+}
+
 detect_php_sock() {
     local sock
     for sock in $PHP_SOCK_GLOB; do
@@ -107,7 +121,10 @@ detect_php_sock() {
 }
 
 create_nginx_vhost() {
-    local webroot="${BASE_DIR}/${USERNAME}/public"
+    local home="${BASE_DIR}/${USERNAME}"
+    local webroot="${home}/public"
+
+    ensure_suspended_page
 
     if [ ! -f "$TEMPLATE_FILE" ]; then
         echo "nginx vhost template not found: ${TEMPLATE_FILE}. Skipping vhost setup."
@@ -136,6 +153,8 @@ create_nginx_vhost() {
     content="${content//%%DOMAIN%%/$DOMAIN}"
     content="${content//%%WEBROOT%%/$webroot}"
     content="${content//%%PHP_SOCK%%/$php_sock}"
+    content="${content//%%HOME%%/$home}"
+    content="${content//%%SUSPENDED_ROOT%%/$SUSPENDED_ROOT}"
     printf '%s\n' "$content" > "$vhost_path"
 
     if command -v nginx &>/dev/null; then

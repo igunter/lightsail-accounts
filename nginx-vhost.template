@@ -4,12 +4,29 @@
 #   %%DOMAIN%%      - primary domain (e.g. example.com)
 #   %%WEBROOT%%     - public webroot path (e.g. /var/www/username/public)
 #   %%PHP_SOCK%%    - php-fpm socket path (e.g. /run/php/php8.2-fpm.sock)
+#   %%HOME%%        - account home directory (e.g. /var/www/username)
+#   %%SUSPENDED_ROOT%% - shared "Account Suspended" static page directory
+#
+# Suspend/reactivate (suspend.sh / reactivate.sh) work by creating or removing
+# a %%HOME%%/.suspended sentinel file - no nginx edits or reload needed at
+# suspend time, so this file's certbot-managed SSL directives are never
+# touched by suspending an account.
 
 server {
     listen 80;
     server_name %%DOMAIN%%;
     root %%WEBROOT%%;
     index index.php index.html;
+
+    if (-f "%%HOME%%/.suspended") {
+        return 503;
+    }
+
+    error_page 503 @suspended;
+    location @suspended {
+        root %%SUSPENDED_ROOT%%;
+        rewrite ^ /index.html break;
+    }
 
     location / {
         try_files $uri $uri/ /index.php?$query_string;

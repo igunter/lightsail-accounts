@@ -62,7 +62,27 @@ create_account() {
 }
 
 suspend_account() {
-    echo "Suspend Account: coming soon."
+    local suspend_script
+    suspend_script="$(dirname "$0")/suspend.sh"
+
+    if [ ! -f "$suspend_script" ]; then
+        echo "suspend.sh not found next to index.sh."
+        return
+    fi
+
+    bash "$suspend_script"
+}
+
+reactivate_account() {
+    local reactivate_script
+    reactivate_script="$(dirname "$0")/reactivate.sh"
+
+    if [ ! -f "$reactivate_script" ]; then
+        echo "reactivate.sh not found next to index.sh."
+        return
+    fi
+
+    bash "$reactivate_script"
 }
 
 delete_account() {
@@ -81,9 +101,10 @@ show_menu() {
     echo "===== Lightsail Accounts ====="
     echo "1) List Accounts"
     echo "2) Create Account"
-    echo "3) Suspend Account (Coming Soon)"
-    echo "4) Delete Account (Coming Soon)"
-    echo "5) Exit"
+    echo "3) Suspend Account"
+    echo "4) Reactivate Account"
+    echo "5) Delete Account (Coming Soon)"
+    echo "6) Exit"
     echo "==============================="
 }
 
@@ -92,16 +113,17 @@ main() {
 
     while true; do
         show_menu
-        read -rp "Select an option [1-5]: " choice
+        read -rp "Select an option [1-6]: " choice
         echo ""
 
         case "$choice" in
             1) list_accounts ;;
             2) create_account ;;
             3) suspend_account ;;
-            4) delete_account ;;
-            5) echo "Goodbye."; exit 0 ;;
-            *) echo "Invalid option, please select 1-5." ;;
+            4) reactivate_account ;;
+            5) delete_account ;;
+            6) echo "Goodbye."; exit 0 ;;
+            *) echo "Invalid option, please select 1-6." ;;
         esac
     done
 }
