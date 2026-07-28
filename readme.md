@@ -28,7 +28,7 @@ After running the script, you will then be displayed with a menu of options.
 - Create Account
 - Deactivate Account
 - Reactivate Account
-- Delete Account (Coming Soon)
+- Delete Account
 
 ### List Accounts
 
@@ -67,5 +67,24 @@ This option runs `reactivate.sh` to undo a deactivation: removes the `.deactivat
 
 ### Delete Account
 
-This option will delete an account. You will be asked for the following information:
-- Username
+This option runs `delete.sh`. **The account must already be deactivated** (option 3) - this is a deliberate guardrail so a live account can't be deleted by mistake; `delete.sh` will refuse and tell you to deactivate first otherwise.
+
+You'll be asked for the username, shown a summary of what will be removed, and then must type the username again to confirm. Once confirmed, it:
+- Archives `/var/www/<username>` to `/var/backups/lightsail-accounts/<username>-<timestamp>.tar.gz`.
+- Removes the nginx vhost (`/etc/nginx/conf.d/<username>.conf`) and any `patch_legacy_vhost` backups for it.
+- Queues the SSL certificate for deletion 28 days from now (see below) rather than revoking it immediately.
+- Deletes the Linux system user and its home directory (`userdel -r`).
+
+`delete.sh` can also be run directly: `sudo bash delete.sh`.
+
+#### SSL certificate cleanup (`cleanup-certs.sh`)
+
+Certificates aren't revoked at delete time - `delete.sh` drops a file named after the domain into `/etc/lightsail-accounts/cert-cleanup-queue/` containing the date it becomes eligible for deletion (today + 28 days). This gives you a grace period in case the domain gets reused (e.g. `create.sh` recreates the account) before then, in which case the next cleanup run cancels it automatically instead of deleting a certificate that's back in use.
+
+`cleanup-certs.sh` is meant to run on a daily cron schedule and processes that queue - deleting (via `certbot delete`) any certificate whose grace period has passed, and cancelling the cleanup for any domain it finds is back in an active nginx vhost. Add it to root's crontab, e.g.:
+```
+sudo crontab -e
+```
+```
+0 3 * * * bash /lightsail-accounts/cleanup-certs.sh >> /var/log/lightsail-accounts-cert-cleanup.log 2>&1
+```

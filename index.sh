@@ -91,7 +91,15 @@ reactivate_account() {
 }
 
 delete_account() {
-    echo "Delete Account: coming soon."
+    local delete_script
+    delete_script="$(dirname "$0")/delete.sh"
+
+    if [ ! -f "$delete_script" ]; then
+        echo "delete.sh not found next to index.sh."
+        return
+    fi
+
+    bash "$delete_script"
 }
 
 require_root() {
@@ -108,7 +116,7 @@ show_menu() {
     echo "2) Create Account"
     echo "3) Deactivate Account"
     echo "4) Reactivate Account"
-    echo "5) Delete Account (Coming Soon)"
+    echo "5) Delete Account"
     echo "6) Exit"
     echo "==============================="
 }
