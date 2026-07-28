@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Account Suspended</title>
+<title>Account Deactivated</title>
 <meta name="robots" content="noindex, nofollow">
 <style>
   body {
@@ -23,7 +23,7 @@
 </head>
 <body>
   <div class="box">
-    <h1>Account Suspended</h1>
+    <h1>Account Deactivated</h1>
     <p>This website is currently unavailable. Please contact the site owner or hosting provider for more information.</p>
   </div>
 </body>

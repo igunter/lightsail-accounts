@@ -5,12 +5,12 @@
 #   %%WEBROOT%%     - public webroot path (e.g. /var/www/username/public)
 #   %%PHP_SOCK%%    - php-fpm socket path (e.g. /run/php/php8.2-fpm.sock)
 #   %%HOME%%        - account home directory (e.g. /var/www/username)
-#   %%SUSPENDED_ROOT%% - shared "Account Suspended" static page directory
+#   %%DEACTIVATED_ROOT%% - shared "Account Deactivated" static page directory
 #
-# Suspend/reactivate (suspend.sh / reactivate.sh) work by creating or removing
-# a %%HOME%%/.suspended sentinel file - no nginx edits or reload needed at
-# suspend time, so this file's certbot-managed SSL directives are never
-# touched by suspending an account.
+# Deactivate/reactivate (deactivate.sh / reactivate.sh) work by creating or
+# removing a %%HOME%%/.deactivated sentinel file - no nginx edits or reload
+# needed at deactivate time, so this file's certbot-managed SSL directives
+# are never touched by deactivating an account.
 
 server {
     listen 80;
@@ -18,14 +18,14 @@ server {
     root %%WEBROOT%%;
     index index.php index.html;
 
-    # lightsail-accounts: suspend check (managed - do not remove)
-    if (-f "%%HOME%%/.suspended") {
+    # lightsail-accounts: deactivate check (managed - do not remove)
+    if (-f "%%HOME%%/.deactivated") {
         return 503;
     }
 
-    error_page 503 @suspended;
-    location @suspended {
-        root %%SUSPENDED_ROOT%%;
+    error_page 503 @deactivated;
+    location @deactivated {
+        root %%DEACTIVATED_ROOT%%;
         rewrite ^ /index.html break;
     }
 

@@ -8,5 +8,5 @@
 
 DOMAIN="example.com"
 SSL="yes"          # yes or no
-STATUS="active"    # active or suspended
+STATUS="active"    # active or deactivated
 CREATED="2026-07-28"

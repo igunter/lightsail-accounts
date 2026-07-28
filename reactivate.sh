@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Lightsail Accounts - reactivate a suspended account.
+# Lightsail Accounts - reactivate a deactivated account.
 #
-# Removes the %%HOME%%/.suspended sentinel file (see suspend.sh /
+# Removes the %%HOME%%/.deactivated sentinel file (see deactivate.sh /
 # nginx-vhost.template), unlocks the account's Linux login, and sets
 # STATUS=active in its .account metadata file.
 #
@@ -13,7 +13,7 @@ set -euo pipefail
 
 BASE_DIR="/var/www"
 ACCOUNT_META_FILE=".account"
-SUSPENDED_FLAG_FILE=".suspended"
+DEACTIVATED_FLAG_FILE=".deactivated"
 
 require_root() {
     if [ "$(id -u)" -ne 0 ]; then
@@ -29,8 +29,8 @@ prompt_username() {
             echo "No account found at ${BASE_DIR}/${USERNAME}."
             continue
         fi
-        if [ ! -f "${BASE_DIR}/${USERNAME}/${SUSPENDED_FLAG_FILE}" ]; then
-            echo "Account '${USERNAME}' is not suspended."
+        if [ ! -f "${BASE_DIR}/${USERNAME}/${DEACTIVATED_FLAG_FILE}" ]; then
+            echo "Account '${USERNAME}' is not deactivated."
             continue
         fi
         break
@@ -75,7 +75,7 @@ reactivate_account() {
     prompt_username
     read_account_meta
 
-    rm -f "${BASE_DIR}/${USERNAME}/${SUSPENDED_FLAG_FILE}"
+    rm -f "${BASE_DIR}/${USERNAME}/${DEACTIVATED_FLAG_FILE}"
     unlock_system_user
     write_account_meta
 

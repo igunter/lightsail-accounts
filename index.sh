@@ -61,16 +61,16 @@ create_account() {
     bash "$create_script"
 }
 
-suspend_account() {
-    local suspend_script
-    suspend_script="$(dirname "$0")/suspend.sh"
+deactivate_account() {
+    local deactivate_script
+    deactivate_script="$(dirname "$0")/deactivate.sh"
 
-    if [ ! -f "$suspend_script" ]; then
-        echo "suspend.sh not found next to index.sh."
+    if [ ! -f "$deactivate_script" ]; then
+        echo "deactivate.sh not found next to index.sh."
         return
     fi
 
-    bash "$suspend_script"
+    bash "$deactivate_script"
 }
 
 reactivate_account() {
@@ -101,7 +101,7 @@ show_menu() {
     echo "===== Lightsail Accounts ====="
     echo "1) List Accounts"
     echo "2) Create Account"
-    echo "3) Suspend Account"
+    echo "3) Deactivate Account"
     echo "4) Reactivate Account"
     echo "5) Delete Account (Coming Soon)"
     echo "6) Exit"
@@ -119,7 +119,7 @@ main() {
         case "$choice" in
             1) list_accounts ;;
             2) create_account ;;
-            3) suspend_account ;;
+            3) deactivate_account ;;
             4) reactivate_account ;;
             5) delete_account ;;
             6) echo "Goodbye."; exit 0 ;;
