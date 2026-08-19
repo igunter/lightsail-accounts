@@ -118,6 +118,15 @@ delete_system_user() {
             echo "userdel failed (see error above) - remove the account manually: sudo userdel -r ${USERNAME}"
             return 1
         fi
+        return 0
+    fi
+
+    # No matching Linux user (e.g. an account seeded from a pre-existing
+    # directory via seed-accounts.sh) - userdel -r has nothing to remove the
+    # home directory for, so remove it directly.
+    if ! rm -rf "${BASE_DIR:?}/${USERNAME}"; then
+        echo "Failed to remove ${BASE_DIR}/${USERNAME} - remove it manually: sudo rm -rf ${BASE_DIR}/${USERNAME}"
+        return 1
     fi
 }
 
