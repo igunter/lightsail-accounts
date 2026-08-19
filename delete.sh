@@ -114,8 +114,9 @@ queue_cert_cleanup() {
 
 delete_system_user() {
     if id "$USERNAME" &>/dev/null; then
-        if ! userdel -r "$USERNAME" 2>/dev/null; then
-            echo "userdel failed - remove the account manually: sudo userdel -r ${USERNAME}"
+        if ! userdel -r "$USERNAME"; then
+            echo "userdel failed (see error above) - remove the account manually: sudo userdel -r ${USERNAME}"
+            return 1
         fi
     fi
 }
@@ -132,10 +133,14 @@ delete_account() {
     backup_account
     remove_nginx_vhost
     queue_cert_cleanup
-    delete_system_user
 
     echo ""
-    echo "Account '${USERNAME}' deleted."
+    if delete_system_user; then
+        echo "Account '${USERNAME}' deleted."
+    else
+        echo "Account '${USERNAME}' NOT fully deleted - the Linux user/home directory still exist. Its nginx vhost was removed and its files were backed up, but you must remove the system user manually (see above)."
+        return 1
+    fi
 }
 
 # Allow this script to be sourced (e.g. by index.sh) without auto-running.

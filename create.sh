@@ -156,23 +156,23 @@ create_nginx_vhost() {
 
     if [ ! -f "$TEMPLATE_FILE" ]; then
         echo "nginx vhost template not found: ${TEMPLATE_FILE}. Skipping vhost setup."
-        return
+        return 1
     fi
     if [ ! -d "$NGINX_CONF_D" ]; then
         echo "${NGINX_CONF_D} not found (is nginx installed?). Skipping vhost setup."
-        return
+        return 1
     fi
 
     local vhost_path="${NGINX_CONF_D}/${USERNAME}.conf"
     if [ -e "$vhost_path" ]; then
         echo "nginx vhost ${vhost_path} already exists. Skipping vhost setup."
-        return
+        return 1
     fi
 
     local php_sock
     if ! php_sock="$(detect_php_sock)"; then
         echo "No php-fpm socket found matching ${PHP_SOCK_GLOB}. Skipping vhost setup - install/start php-fpm and create the vhost manually."
-        return
+        return 1
     fi
 
     echo "Creating nginx vhost for ${DOMAIN} (php-fpm socket: ${php_sock})..."
@@ -190,6 +190,7 @@ create_nginx_vhost() {
             systemctl reload nginx 2>/dev/null || service nginx reload 2>/dev/null || true
         else
             echo "nginx config test failed after adding ${DOMAIN}. Check ${vhost_path} manually."
+            return 1
         fi
     fi
 }
@@ -233,8 +234,13 @@ create_account() {
     prompt_ssl
 
     create_system_user
-    create_nginx_vhost
-    issue_ssl_cert
+    local vhost_created="yes"
+    create_nginx_vhost || vhost_created="no"
+    if [ "$vhost_created" = "yes" ]; then
+        issue_ssl_cert
+    else
+        SSL="no"
+    fi
     write_account_meta
 
     echo ""
@@ -243,6 +249,10 @@ create_account() {
     echo "  Webroot: ${BASE_DIR}/${USERNAME}/public"
     echo "  Domain:  ${DOMAIN}"
     echo "  SSL:     ${SSL}"
+    if [ "$vhost_created" = "no" ]; then
+        echo ""
+        echo "WARNING: the nginx vhost was NOT created (see message above) - ${DOMAIN} is not being served yet. Fix the issue and create ${NGINX_CONF_D}/${USERNAME}.conf manually, or remove and re-run this script."
+    fi
 }
 
 # Allow this script to be sourced (e.g. by index.sh) without auto-running.
