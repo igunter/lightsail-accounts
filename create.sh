@@ -95,7 +95,6 @@ create_system_user() {
     useradd -m -d "$webroot" -s /usr/sbin/nologin "$USERNAME"
     echo "${USERNAME}:${PASSWORD}" | chpasswd
     mkdir -p "${webroot}/public"
-    chown -R "${USERNAME}:${USERNAME}" "$webroot"
 
     # useradd's default home dir mode can be as restrictive as 700, which
     # blocks nginx/php-fpm (running as a different user) from traversing in.
@@ -119,7 +118,6 @@ seed_placeholder_page() {
     fi
 
     cp "$PLACEHOLDER_PAGE_TEMPLATE" "$index_path"
-    chown "${USERNAME}:${USERNAME}" "$index_path"
     chmod 644 "$index_path"
 }
 
@@ -223,7 +221,6 @@ SSL="${SSL}"
 STATUS="active"
 CREATED="$(date +%F)"
 EOF
-    chown "${USERNAME}:${USERNAME}" "$meta_path"
 }
 
 create_account() {
@@ -242,6 +239,7 @@ create_account() {
         SSL="no"
     fi
     write_account_meta
+    chown -R admin:www-data "${BASE_DIR}/${USERNAME}"
 
     echo ""
     echo "Account '${USERNAME}' created."

@@ -59,7 +59,7 @@ SSL="${SSL}"
 STATUS="active"
 CREATED="${CREATED}"
 EOF
-    chown "${USERNAME}:${USERNAME}" "$meta_path" 2>/dev/null || true
+    chown admin:www-data "$meta_path" 2>/dev/null || true
 }
 
 unlock_system_user() {
