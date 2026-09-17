@@ -217,6 +217,7 @@ write_account_meta() {
     local meta_path="${BASE_DIR}/${USERNAME}/${ACCOUNT_META_FILE}"
     cat > "$meta_path" <<EOF
 DOMAIN="${DOMAIN}"
+ALT_DOMAINS=""
 SSL="${SSL}"
 STATUS="active"
 CREATED="$(date +%F)"

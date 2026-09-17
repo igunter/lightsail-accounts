@@ -27,6 +27,7 @@ read_account_meta() {
     local meta_path="${BASE_DIR}/${USERNAME}/${ACCOUNT_META_FILE}"
 
     DOMAIN="-"
+    ALT_DOMAINS=""
     SSL="-"
     STATUS="unknown"
     CREATED="-"
@@ -67,6 +68,7 @@ write_account_meta() {
     local meta_path="${BASE_DIR}/${USERNAME}/${ACCOUNT_META_FILE}"
     cat > "$meta_path" <<EOF
 DOMAIN="${DOMAIN}"
+ALT_DOMAINS="${ALT_DOMAINS}"
 SSL="${SSL}"
 STATUS="${STATUS}"
 CREATED="${CREATED}"
@@ -80,11 +82,15 @@ issue_ssl_cert() {
         exit 1
     fi
 
-    echo "Requesting SSL certificate for ${DOMAIN} via certbot..."
-    if ! certbot --nginx -d "$DOMAIN" \
-        --non-interactive --agree-tos --redirect --no-eff-email \
-        --register-unsafely-without-email; then
-        echo "certbot failed for ${DOMAIN}. SSL was not enabled - check DNS for ${DOMAIN} points at this server and retry."
+    local -a certbot_args=(--nginx --non-interactive --agree-tos --redirect --no-eff-email --register-unsafely-without-email -d "$DOMAIN")
+    local d
+    for d in $ALT_DOMAINS; do
+        certbot_args+=(-d "$d")
+    done
+
+    echo "Requesting SSL certificate for ${DOMAIN}${ALT_DOMAINS:+ (plus ${ALT_DOMAINS})} via certbot..."
+    if ! certbot "${certbot_args[@]}"; then
+        echo "certbot failed for ${DOMAIN}. SSL was not enabled - check DNS for the domain(s) points at this server and retry."
         exit 1
     fi
 }

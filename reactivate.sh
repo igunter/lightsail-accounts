@@ -41,6 +41,7 @@ read_account_meta() {
     local meta_path="${BASE_DIR}/${USERNAME}/${ACCOUNT_META_FILE}"
 
     DOMAIN="-"
+    ALT_DOMAINS=""
     SSL="-"
     STATUS="unknown"
     CREATED="-"
@@ -55,6 +56,7 @@ write_account_meta() {
     local meta_path="${BASE_DIR}/${USERNAME}/${ACCOUNT_META_FILE}"
     cat > "$meta_path" <<EOF
 DOMAIN="${DOMAIN}"
+ALT_DOMAINS="${ALT_DOMAINS}"
 SSL="${SSL}"
 STATUS="active"
 CREATED="${CREATED}"

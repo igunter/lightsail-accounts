@@ -30,6 +30,8 @@ After running the script, you will then be displayed with a menu of options.
 - Reactivate Account
 - Delete Account
 - Enable SSL
+- Add Domain
+- Remove Domain
 
 ### List Accounts
 
@@ -85,6 +87,26 @@ This option runs `enable-ssl.sh`, for an account that was created without SSL (o
 It refuses accounts that already have `SSL="yes"`, have no `DOMAIN` set, or have no nginx vhost yet - create the vhost (e.g. by re-running Create Account, or by hand) before requesting a certificate. Make sure DNS for the domain already points at this server before running it, since certbot's HTTP-01 challenge needs that to succeed.
 
 `enable-ssl.sh` can also be run directly: `sudo bash enable-ssl.sh`.
+
+### Add Domain
+
+This option runs `add-domain.sh` to put an extra domain on an existing account alongside its primary domain (e.g. adding `www.kidtellect.co.uk` to an account whose primary domain is `kidtellect.co.uk`, or moving an account onto a second domain ahead of a cutover). You'll be asked for the username and the domain to add. It:
+- Refuses a domain that's already on this account, or that appears in another account's nginx vhost (so two accounts can never claim the same hostname).
+- Rewrites the account's `server_name` line in `/etc/nginx/conf.d/<username>.conf` to include the new domain alongside the existing ones, and reloads nginx.
+- If the account has `SSL="yes"`, expands its certificate via `certbot --nginx --cert-name <primary-domain> --expand` to also cover the new domain.
+- Records the new domain in `ALT_DOMAINS` (space-separated) in the account's `.account` file - the original `DOMAIN` field stays the primary hostname.
+
+If certbot fails (e.g. DNS for the new domain isn't pointed at this server yet), the vhost change is rolled back from an automatic backup and nothing is left half-done.
+
+`add-domain.sh` can also be run directly: `sudo bash add-domain.sh`.
+
+### Remove Domain
+
+This option runs `remove-domain.sh` to take a domain back off an account. Only domains previously added via Add Domain (tracked in `ALT_DOMAINS`) can be removed this way - the account's original primary `DOMAIN` can't be, since the vhost file, `.account` metadata and (if SSL is on) the certificate's name are all keyed off it; to retire the primary domain entirely, add its replacement first, then delete and recreate the account once traffic has moved over.
+
+You'll be asked for the username, shown its current extra domains, and asked which one to remove. It rewrites `server_name` to drop that domain, reloads nginx, and - if `SSL="yes"` - reissues the certificate covering only the remaining domains. As with Add Domain, a failed certbot run rolls back the vhost change automatically.
+
+`remove-domain.sh` can also be run directly: `sudo bash remove-domain.sh`.
 
 #### SSL certificate cleanup (`cleanup-certs.sh`)
 

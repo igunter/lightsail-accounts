@@ -7,6 +7,7 @@
 # This file is sourced by index.sh, so keep it valid bash (KEY="value").
 
 DOMAIN="example.com"
+ALT_DOMAINS=""     # space-separated extra domains on the same vhost/cert, e.g. "www.example.com m.example.com"
 SSL="yes"          # yes or no
 STATUS="active"    # active or deactivated
 CREATED="2026-07-28"

@@ -7,12 +7,13 @@ BASE_DIR="/var/www"
 ACCOUNT_META_FILE=".account"
 
 # Each account directory (/var/www/<username>) may contain a metadata file
-# (.account) with KEY=VALUE lines: DOMAIN, SSL, STATUS, CREATED.
+# (.account) with KEY=VALUE lines: DOMAIN, ALT_DOMAINS, SSL, STATUS, CREATED.
 read_account_meta() {
     local account_dir="$1"
     local meta_path="${account_dir}/${ACCOUNT_META_FILE}"
 
     DOMAIN="-"
+    ALT_DOMAINS=""
     SSL="-"
     STATUS="unknown"
     CREATED="-"
@@ -45,12 +46,16 @@ list_accounts() {
         return
     fi
 
-    printf "%-20s %-30s %-6s %-10s\n" "USERNAME" "DOMAIN" "SSL" "STATUS"
-    printf "%-20s %-30s %-6s %-10s\n" "--------" "------" "---" "------"
+    printf "%-20s %-45s %-6s %-10s\n" "USERNAME" "DOMAIN" "SSL" "STATUS"
+    printf "%-20s %-45s %-6s %-10s\n" "--------" "------" "---" "------"
 
     for username in "${accounts[@]}"; do
         read_account_meta "${BASE_DIR}/${username}"
-        printf "%-20s %-30s %-6s %-10s\n" "$username" "$DOMAIN" "$SSL" "$STATUS"
+        local domains_display="$DOMAIN"
+        if [ -n "$ALT_DOMAINS" ]; then
+            domains_display="${DOMAIN}, ${ALT_DOMAINS// /, }"
+        fi
+        printf "%-20s %-45s %-6s %-10s\n" "$username" "$domains_display" "$SSL" "$STATUS"
     done
 }
 
@@ -114,6 +119,30 @@ enable_ssl() {
     bash "$enable_ssl_script"
 }
 
+add_domain() {
+    local add_domain_script
+    add_domain_script="$(dirname "$0")/add-domain.sh"
+
+    if [ ! -f "$add_domain_script" ]; then
+        echo "add-domain.sh not found next to index.sh."
+        return
+    fi
+
+    bash "$add_domain_script"
+}
+
+remove_domain() {
+    local remove_domain_script
+    remove_domain_script="$(dirname "$0")/remove-domain.sh"
+
+    if [ ! -f "$remove_domain_script" ]; then
+        echo "remove-domain.sh not found next to index.sh."
+        return
+    fi
+
+    bash "$remove_domain_script"
+}
+
 require_root() {
     if [ "$(id -u)" -ne 0 ]; then
         echo "This script must be run as root (try: sudo bash index.sh)."
@@ -130,7 +159,9 @@ show_menu() {
     echo "4) Reactivate Account"
     echo "5) Delete Account"
     echo "6) Enable SSL"
-    echo "7) Exit"
+    echo "7) Add Domain"
+    echo "8) Remove Domain"
+    echo "9) Exit"
     echo "==============================="
 }
 
@@ -139,7 +170,7 @@ main() {
 
     while true; do
         show_menu
-        read -rp "Select an option [1-7]: " choice
+        read -rp "Select an option [1-9]: " choice
         echo ""
 
         case "$choice" in
@@ -149,8 +180,10 @@ main() {
             4) reactivate_account ;;
             5) delete_account ;;
             6) enable_ssl ;;
-            7) echo "Goodbye."; exit 0 ;;
-            *) echo "Invalid option, please select 1-7." ;;
+            7) add_domain ;;
+            8) remove_domain ;;
+            9) echo "Goodbye."; exit 0 ;;
+            *) echo "Invalid option, please select 1-9." ;;
         esac
     done
 }

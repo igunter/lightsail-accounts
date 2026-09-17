@@ -51,6 +51,7 @@ read_account_meta() {
     local meta_path="${BASE_DIR}/${USERNAME}/${ACCOUNT_META_FILE}"
 
     DOMAIN="-"
+    ALT_DOMAINS=""
     SSL="-"
     STATUS="unknown"
     CREATED="-"
