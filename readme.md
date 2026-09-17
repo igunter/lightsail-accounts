@@ -29,6 +29,7 @@ After running the script, you will then be displayed with a menu of options.
 - Deactivate Account
 - Reactivate Account
 - Delete Account
+- Enable SSL
 
 ### List Accounts
 
@@ -76,6 +77,14 @@ You'll be asked for the username, shown a summary of what will be removed, and t
 - Deletes the Linux system user and its home directory (`userdel -r`).
 
 `delete.sh` can also be run directly: `sudo bash delete.sh`.
+
+### Enable SSL
+
+This option runs `enable-ssl.sh`, for an account that was created without SSL (or whose SSL request failed at create time). You'll be asked for the username; it looks up the domain from that account's `.account` file, requests a certificate via `certbot --nginx -d <domain>` (which wires up the `ssl_certificate` directives and HTTP->HTTPS redirect in the account's vhost itself), and sets `SSL="yes"` in `.account`.
+
+It refuses accounts that already have `SSL="yes"`, have no `DOMAIN` set, or have no nginx vhost yet - create the vhost (e.g. by re-running Create Account, or by hand) before requesting a certificate. Make sure DNS for the domain already points at this server before running it, since certbot's HTTP-01 challenge needs that to succeed.
+
+`enable-ssl.sh` can also be run directly: `sudo bash enable-ssl.sh`.
 
 #### SSL certificate cleanup (`cleanup-certs.sh`)
 

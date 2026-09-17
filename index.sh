@@ -102,6 +102,18 @@ delete_account() {
     bash "$delete_script"
 }
 
+enable_ssl() {
+    local enable_ssl_script
+    enable_ssl_script="$(dirname "$0")/enable-ssl.sh"
+
+    if [ ! -f "$enable_ssl_script" ]; then
+        echo "enable-ssl.sh not found next to index.sh."
+        return
+    fi
+
+    bash "$enable_ssl_script"
+}
+
 require_root() {
     if [ "$(id -u)" -ne 0 ]; then
         echo "This script must be run as root (try: sudo bash index.sh)."
@@ -117,7 +129,8 @@ show_menu() {
     echo "3) Deactivate Account"
     echo "4) Reactivate Account"
     echo "5) Delete Account"
-    echo "6) Exit"
+    echo "6) Enable SSL"
+    echo "7) Exit"
     echo "==============================="
 }
 
@@ -126,7 +139,7 @@ main() {
 
     while true; do
         show_menu
-        read -rp "Select an option [1-6]: " choice
+        read -rp "Select an option [1-7]: " choice
         echo ""
 
         case "$choice" in
@@ -135,8 +148,9 @@ main() {
             3) deactivate_account ;;
             4) reactivate_account ;;
             5) delete_account ;;
-            6) echo "Goodbye."; exit 0 ;;
-            *) echo "Invalid option, please select 1-6." ;;
+            6) enable_ssl ;;
+            7) echo "Goodbye."; exit 0 ;;
+            *) echo "Invalid option, please select 1-7." ;;
         esac
     done
 }
